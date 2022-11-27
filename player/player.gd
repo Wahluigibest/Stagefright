@@ -8,14 +8,17 @@ enum States {
 	RUN = 2,
 	FLY = 3,
 	FALL = 4,
+	WALLSLIDE = 5,
 }
 
-
+#NEVER TOUCH THESE VARIABLES, THEY ARE ALL ESSENTIAL TO THE PHYSICS WORKING
 var VELOCITY = Vector2.ZERO
 const FLOOR_NORMAL = Vector2.UP 
 const SNAP_DIRECTION = Vector2.DOWN
 const SNAP_LENGTH = 32.0
 const SLOPE_THERSHOLD = deg2rad(46)
+
+#No move horizontal ensures the player can not use the left or right inputs to move in some cases like after wallkicking or hitstun
 var NO_MOVE_HORIZONTAL_TIME = 0.0
 #This variable is to make sure you don't snap where you jump and you can apply vertical force 
 var SNAP_VECTOR = SNAP_DIRECTION * SNAP_LENGTH
@@ -23,17 +26,20 @@ var SNAP_VECTOR = SNAP_DIRECTION * SNAP_LENGTH
 var run_max = 350
 var run_acc = 28
 var jump_speed = -800
+var walk_speed = 157.5
+var wallkick_speed = 285
 var gravity = 2000
 var friction = 30 
 
-#variables so you can communicate between child nodes
-onready var sprite = $Sprite
-onready var sprite_scale = sprite.scale.x
-
+#Variables so you can communicate between child nodes, The position node is just so you can flip and rotate the player easily
+onready var position2D = $Position2D 
+#These labels are temporaries until I find out how to make UI
+onready var Ceiling_Label = $CeilingLabel
 onready var Velocity_label = $VelocityLabel
 onready var Floor_label = $FloorLabel
 onready var Direction_Label = $DirectionLabel
 onready var Animation_Label = $AnimationLabel
+onready var Wall_Label = $WallLabel
 
 var jump_hold_time = 0.2
 var local_hold_time = 0
@@ -51,43 +57,73 @@ func _physics_process(delta):
 	var jump = Input.is_action_just_pressed("jump")
 	var walk = Input.get_action_strength("walk")
 	
-	get_input(direction,jump,walk)
-	VELOCITY.y += gravity * delta
+	get_input(direction,jump,walk,delta)
+	move_and_fall(delta)
 	#This is so the player moves smoothly up and down slopes, the true is so the player stops on slopes
 	VELOCITY.y = move_and_slide_with_snap(VELOCITY, SNAP_VECTOR, 
 			FLOOR_NORMAL, true, 4, SLOPE_THERSHOLD).y 
 	if is_on_floor() and SNAP_VECTOR == Vector2.ZERO:
 		reset_snap()
 	local_hold_time -= delta
-	Label_print(direction)
 
-func get_input(direction,jump,walk):
+func move_and_fall(delta):
+	VELOCITY.y += gravity * delta
+	if is_near_wall(): #This clamp allows for the wall slide effect where you're slowly sliding down a wall so you have more time to wall kick
+		VELOCITY.y = clamp(VELOCITY.y, jump_speed, 200)
+
+func get_input(direction,jump,walk,delta):
 	if is_on_floor():
 		if jump:
+			#Setting the snap vector to zero here allows the players to jump instead of being glued to the floor
 			SNAP_VECTOR = Vector2.ZERO
 			VELOCITY.y = jump_speed
 			#The hold is so you can't jump infinite times
 			local_hold_time = jump_hold_time
-	elif local_hold_time > 0:
-		if jump:
-			VELOCITY.y = jump_speed
-		else:
-			local_hold_time = 0
+		elif local_hold_time > 0:
+			if jump:
+				VELOCITY.y = jump_speed
+			else:
+				local_hold_time = 0
+	else:
+		#This is for wallkicks, the player senses ceilings as walls due the fact the sensor is at 135 degrees
+		#So there is a checker to make sure you can't wallkick off of ceils
+		if is_near_wall() and !is_near_ceiling():
+			if Input.is_action_pressed("jump") and (Input.is_action_pressed("move_left") and direction < 0) or (Input.is_action_pressed("move_right") and direction > 0):
+				#It felt clunky at the beginning because you would quickly turn around from your left input, 
+				#so there's a no move timer to ensure you move a bit 
+				NO_MOVE_HORIZONTAL_TIME = 0.3
+				VELOCITY.x = wallkick_speed * -direction
+				VELOCITY.y = jump_speed * 0.7
+	
 	if direction != 0:
 		#Turn around and move
-		sprite.transform.x = direction * Vector2(sprite_scale, 0)
+		position2D.scale.x = direction * 1
+		#The wall checker detects any walls in front of the player but also needs to not detect any slopes
+		#All of the slopes are 45 degrees so we use 135 degrees to ensure it never touches slopes
+		$Wallchecker.rotation_degrees = 135 * -direction
+		print(NO_MOVE_HORIZONTAL_TIME)
 		#Adds all effects so you can accelerate
-		if walk:
-			VELOCITY.x = run_max * direction * 0.45
+		if NO_MOVE_HORIZONTAL_TIME > 0.0:
+			NO_MOVE_HORIZONTAL_TIME -= delta
 		else:
-			VELOCITY.x = move_toward(VELOCITY.x, run_max * direction, run_acc)
+			if walk:
+				VELOCITY.x = walk_speed * direction 
+			else:
+					VELOCITY.x = move_toward(VELOCITY.x, run_max * direction, run_acc)
 	else:
 		#Stop moving and apply friction
 		VELOCITY.x = move_toward(VELOCITY.x, 0, friction)
 	animation(direction, jump, walk)
 	
+
 func reset_snap():
 	SNAP_VECTOR = SNAP_DIRECTION * SNAP_LENGTH
+
+func is_near_wall():
+	return $Wallchecker.is_colliding()
+
+func is_near_ceiling():
+	return $Ceilingchecker.is_colliding()
 
 func animation(direction, jump, walk):
 	# Check if on floor and do mostly animation stuff based on it.
@@ -114,16 +150,27 @@ func animation(direction, jump, walk):
 	elif VELOCITY.y < 1600:
 		$AnimationTree["parameters/state/current"] = States.FALL
 		Animation_Label.text = "Current animation: Fall"
+	if  is_near_wall():
+		$AnimationTree["parameters/state/current"] = States.WALLSLIDE
+		Animation_Label.text = "Current animation: Wallslide"
 
 func Label_print(direction):
-	var spaces = subTxt("     ", multTxt(" ", str(VELOCITY).length()))
-	Velocity_label.text = "VELOCITY:" + spaces + str(VELOCITY)
-	print(VELOCITY.y)
+	Velocity_label.text = "VELOCITY: " + str(VELOCITY)
 	
 	if is_on_floor():
-		Floor_label.text = "On Floor"
+		Floor_label.text = "On Floor" 
 	else:
 		Floor_label.text = "In air"
+	
+	if is_near_wall():
+		Wall_Label.text = "On Wall"
+	else:
+		Wall_Label.text = "Away from wall"
+	
+	if is_near_ceiling():
+		Ceiling_Label.text = "Touching Ceiling"
+	else:
+		Ceiling_Label.text = "Away from ceiling"
 	
 	if direction > 0:
 		Direction_Label.text = "Moving? Right!"
@@ -131,13 +178,3 @@ func Label_print(direction):
 		Direction_Label.text = "Moving? Left!"
 	elif !direction:
 		Direction_Label.text = "Not Moving"
-
-func multTxt(txt, nb):
-	var newText = ""
-	for _i in range(nb):
-		newText += txt
-	return newText
-
-func subTxt(txt1, txt2):
-	var newSize = txt1.length()-txt2.length()
-	return txt1.substr(0, newSize)
