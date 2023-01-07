@@ -27,19 +27,26 @@ var run_max = 350
 var run_acc = 28
 var jump_speed = -800
 var walk_speed = 157.5
-var wallkick_speed = 285
+var wallkick_speed = Vector2(285, 0.7)
 var gravity = 2000
 var friction = 30 
+var wallslide_speed = 200
+var wallkick_stop_frames = 0.3
+var health = 100
 
 #Variables so you can communicate between child nodes, The position node is just so you can flip and rotate the player easily
 onready var position2D = $Position2D 
-#These labels are temporaries until I find out how to make UI
-onready var Ceiling_Label = $CeilingLabel
-onready var Velocity_label = $VelocityLabel
-onready var Floor_label = $FloorLabel
-onready var Direction_Label = $DirectionLabel
-onready var Animation_Label = $AnimationLabel
-onready var Wall_Label = $WallLabel
+#These signals are to send this info to the Dev HUD
+signal Animation_label_change(Value)
+signal Velocity_label_change(Value)
+signal Floor_label_change(Value)
+signal Wall_Label_change(Value)
+signal Ceiling_Label_change(Value)
+signal Direction_Label_change(Value)
+#Tracks current player position
+signal Position_Info(X, Y)
+#Sends HP info to other sprites
+signal Health_Info(HP)
 
 var jump_hold_time = 0.2
 var local_hold_time = 0
@@ -56,8 +63,9 @@ func _physics_process(delta):
 	var direction = sign(Input.get_action_strength("move_right") - Input.get_action_strength("move_left")) 
 	var jump = Input.is_action_just_pressed("jump")
 	var walk = Input.get_action_strength("walk")
+	var CURRENT_POSITION = get_position()
 	
-	get_input(direction,jump,walk,delta)
+	get_input(direction,jump,walk,delta, CURRENT_POSITION)
 	move_and_fall(delta)
 	#This is so the player moves smoothly up and down slopes, the true is so the player stops on slopes
 	VELOCITY.y = move_and_slide_with_snap(VELOCITY, SNAP_VECTOR, 
@@ -69,9 +77,9 @@ func _physics_process(delta):
 func move_and_fall(delta):
 	VELOCITY.y += gravity * delta
 	if is_near_wall(): #This clamp allows for the wall slide effect where you're slowly sliding down a wall so you have more time to wall kick
-		VELOCITY.y = clamp(VELOCITY.y, jump_speed, 200)
+		VELOCITY.y = clamp(VELOCITY.y, jump_speed, wallslide_speed)
 
-func get_input(direction,jump,walk,delta):
+func get_input(direction,jump,walk,delta, CURRENT_POSITION):
 	if is_on_floor():
 		if jump:
 			#Setting the snap vector to zero here allows the players to jump instead of being glued to the floor
@@ -91,9 +99,9 @@ func get_input(direction,jump,walk,delta):
 			if Input.is_action_pressed("jump") and (Input.is_action_pressed("move_left") and direction < 0) or (Input.is_action_pressed("move_right") and direction > 0):
 				#It felt clunky at the beginning because you would quickly turn around from your left input, 
 				#so there's a no move timer to ensure you move a bit 
-				NO_MOVE_HORIZONTAL_TIME = 0.3
-				VELOCITY.x = wallkick_speed * -direction
-				VELOCITY.y = jump_speed * 0.7
+				NO_MOVE_HORIZONTAL_TIME = wallkick_stop_frames
+				VELOCITY.x = wallkick_speed.x * -direction
+				VELOCITY.y = jump_speed * wallkick_speed.y
 	
 	if direction != 0:
 		#Turn around and move
@@ -114,7 +122,8 @@ func get_input(direction,jump,walk,delta):
 		#Stop moving and apply friction
 		VELOCITY.x = move_toward(VELOCITY.x, 0, friction)
 	animation(direction, jump, walk)
-	
+	Label_print(direction)
+	bottomless_pit_check(CURRENT_POSITION)
 
 func reset_snap():
 	SNAP_VECTOR = SNAP_DIRECTION * SNAP_LENGTH
@@ -130,51 +139,61 @@ func animation(direction, jump, walk):
 	if is_on_floor():
 		if falling_ani:
 			$AnimationTree["parameters/land/active"] = true
-			Animation_Label.text = "Current animation: Land"
+			emit_signal("Animation_label_change", "Current animation: Land")
 			falling_ani = false
 		if direction != 0:
 			if abs(VELOCITY.x) > run_max * 0.70 and !walk:
 				$AnimationTree["parameters/state/current"] = States.RUN
-				Animation_Label.text = "Current animation: Run"
+				emit_signal("Animation_label_change", "Current animation: Run")
 				$AnimationTree["parameters/run_timescale/scale"] = abs(VELOCITY.x) / 115
 			elif walk:
 				$AnimationTree["parameters/state/current"] = States.WALK
-				Animation_Label.text = "Current animation: Walk"
+				emit_signal("Animation_label_change", "Current animation: Walk")
 				$AnimationTree["parameters/walk_timescale/scale"] = abs(VELOCITY.x) / 55
 		else:
 			$AnimationTree["parameters/state/current"] = States.IDLE
-			Animation_Label.text = "Current animation: Idle"
+			emit_signal("Animation_label_change", "Current animation: Idle")
 		if jump:
 			$AnimationTree["parameters/jump/active"] = true
-			Animation_Label.text = "Current animation: Jump"
+			emit_signal("Animation_label_change", "Current animation: Jump")
 	elif VELOCITY.y < 1600:
 		$AnimationTree["parameters/state/current"] = States.FALL
-		Animation_Label.text = "Current animation: Fall"
+		emit_signal("Animation_label_change", "Current animation: Fall")
 	if  is_near_wall():
 		$AnimationTree["parameters/state/current"] = States.WALLSLIDE
-		Animation_Label.text = "Current animation: Wallslide"
+		emit_signal("Animation_label_change", "Current animation: Wallslide")
 
 func Label_print(direction):
-	Velocity_label.text = "VELOCITY: " + str(VELOCITY)
+	emit_signal("Velocity_label_change", "VELOCITY: " + str(VELOCITY))
 	
 	if is_on_floor():
-		Floor_label.text = "On Floor" 
+		emit_signal("Floor_label_change", "On Floor")
 	else:
-		Floor_label.text = "In air"
+		emit_signal("Floor_label_change", "In Air")
 	
 	if is_near_wall():
-		Wall_Label.text = "On Wall"
+		emit_signal("Wall_Label_change", "On Wall")
 	else:
-		Wall_Label.text = "Away from wall"
+		emit_signal("Wall_Label_change", "Away from Wall")
 	
 	if is_near_ceiling():
-		Ceiling_Label.text = "Touching Ceiling"
+		emit_signal("Ceiling_Label_change", "Touching Ceiling")
 	else:
-		Ceiling_Label.text = "Away from ceiling"
+		emit_signal("Ceiling_Label_change", "Away from Ceiling")
 	
 	if direction > 0:
-		Direction_Label.text = "Moving? Right!"
+		emit_signal("Direction_Label_change", "Moving Right!")
 	elif direction < 0:
-		Direction_Label.text = "Moving? Left!"
+		emit_signal("Direction_Label_change", "Moving Left!")
 	elif !direction:
-		Direction_Label.text = "Not Moving"
+		emit_signal("Direction_Label_change", "No Movement")
+	
+
+func bottomless_pit_check(CURRENT_POSITION):
+	emit_signal("Position_Info", CURRENT_POSITION.x, CURRENT_POSITION.y)
+	if CURRENT_POSITION.y > 4000:
+		health -= 20
+		print(health)
+		emit_signal("Health_Info", health)
+		self.position = Vector2(90, 550.027771)
+		

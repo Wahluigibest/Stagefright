@@ -13,3 +13,8 @@ func _ready():
 			camera.limit_top = LIMIT_TOP
 			camera.limit_right = LIMIT_RIGHT
 			camera.limit_bottom = LIMIT_BOTTOM
+
+
+func _on_SkeletalPlayer_Health_Info(HP):
+	if HP > 0 or HP == 0:
+		get_tree().get_root().set_disable_input(true)
