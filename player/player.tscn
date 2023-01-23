@@ -1,8 +1,7 @@
-[gd_scene load_steps=32 format=2]
+[gd_scene load_steps=28 format=2]
 
 [ext_resource path="res://player/player.gd" type="Script" id=1]
 [ext_resource path="res://player/gBot.png" type="Texture" id=2]
-[ext_resource path="res://Minecraftia-Regular.ttf" type="DynamicFontData" id=3]
 
 [sub_resource type="Animation" id=28]
 resource_name = "Wallslide"
@@ -1956,19 +1955,10 @@ nodes/walk_animation/node = SubResource( 21 )
 nodes/walk_animation/position = Vector2( 0, 140 )
 nodes/walk_timescale/node = SubResource( 22 )
 nodes/walk_timescale/position = Vector2( 200, 120 )
-node_connections = [ "land", 0, "jump", "land", 1, "land_animation", "land_hard", 0, "land", "land_hard", 1, "land_hard_animation", "run_timescale", 0, "run_animation", "walk_timescale", 0, "walk_animation", "state", 0, "idle_animation", "state", 1, "walk_timescale", "state", 2, "run_timescale", "state", 3, "fly_animation", "state", 4, "fall_animation", "output", 0, "land_hard", "jump", 0, "state", "jump", 1, "jump_animation" ]
+node_connections = [ "state", 0, "idle_animation", "state", 1, "walk_timescale", "state", 2, "run_timescale", "state", 3, "fly_animation", "state", 4, "fall_animation", "output", 0, "land_hard", "jump", 0, "state", "jump", 1, "jump_animation", "land_hard", 0, "land", "land_hard", 1, "land_hard_animation", "land", 0, "jump", "land", 1, "land_animation", "run_timescale", 0, "run_animation", "walk_timescale", 0, "walk_animation" ]
 
 [sub_resource type="RectangleShape2D" id=24]
 extents = Vector2( 11, 16.4358 )
-
-[sub_resource type="DynamicFont" id=29]
-font_data = ExtResource( 3 )
-
-[sub_resource type="DynamicFont" id=30]
-font_data = ExtResource( 3 )
-
-[sub_resource type="DynamicFont" id=31]
-font_data = ExtResource( 3 )
 
 [node name="SkeletalPlayer" type="KinematicBody2D"]
 script = ExtResource( 1 )
@@ -2164,7 +2154,6 @@ internal_vertex_count = 20
 position = Vector2( 0, -32 )
 current = true
 zoom = Vector2( 0.3, 0.3 )
-drag_margin_bottom = 0.0
 
 [node name="Ceilingchecker" type="RayCast2D" parent="."]
 position = Vector2( 0, -15 )
@@ -2178,76 +2167,3 @@ position = Vector2( 0, -15 )
 rotation = -2.33874
 enabled = true
 cast_to = Vector2( 0, 30 )
-
-[node name="GUI" type="Control" parent="."]
-visible = false
-anchor_right = 1.0
-anchor_bottom = 1.0
-margin_left = -240.0
-margin_top = -167.0
-margin_right = 240.0
-margin_bottom = 103.0
-__meta__ = {
-"_edit_use_anchors_": true
-}
-
-[node name="FloorLabel" type="RichTextLabel" parent="GUI"]
-margin_left = 3.0
-margin_top = 6.0
-margin_right = 417.0
-margin_bottom = 141.0
-custom_colors/default_color = Color( 0.945098, 1, 0, 1 )
-custom_fonts/normal_font = SubResource( 29 )
-text = "FloorLabel"
-
-[node name="VelocityLabel" type="RichTextLabel" parent="GUI"]
-margin_left = 3.0
-margin_top = 26.0
-margin_right = 514.0
-margin_bottom = 161.0
-custom_colors/default_color = Color( 0.945098, 1, 0, 1 )
-custom_fonts/normal_font = SubResource( 30 )
-text = "Velocity_Label"
-__meta__ = {
-"_edit_use_anchors_": true
-}
-
-[node name="DirectionLabel" type="RichTextLabel" parent="GUI"]
-margin_left = 3.0
-margin_top = 46.0
-margin_right = 309.0
-margin_bottom = 86.0
-rect_pivot_offset = Vector2( -29, 68 )
-custom_colors/default_color = Color( 0.945098, 1, 0, 1 )
-custom_fonts/normal_font = SubResource( 31 )
-text = "Direction_Label"
-
-[node name="AnimationLabel" type="RichTextLabel" parent="GUI"]
-margin_left = 3.0
-margin_top = 66.0
-margin_right = 309.0
-margin_bottom = 106.0
-rect_pivot_offset = Vector2( -29, 68 )
-custom_colors/default_color = Color( 0.945098, 1, 0, 1 )
-custom_fonts/normal_font = SubResource( 31 )
-text = "Animation_Label"
-
-[node name="WallLabel" type="RichTextLabel" parent="GUI"]
-margin_left = 3.0
-margin_top = 86.0
-margin_right = 309.0
-margin_bottom = 126.0
-rect_pivot_offset = Vector2( -29, 68 )
-custom_colors/default_color = Color( 0.945098, 1, 0, 1 )
-custom_fonts/normal_font = SubResource( 31 )
-text = "Wall_Label"
-
-[node name="CeilingLabel" type="RichTextLabel" parent="GUI"]
-margin_left = 3.0
-margin_top = 106.0
-margin_right = 309.0
-margin_bottom = 146.0
-rect_pivot_offset = Vector2( -29, 68 )
-custom_colors/default_color = Color( 0.945098, 1, 0, 1 )
-custom_fonts/normal_font = SubResource( 31 )
-text = "Ceiling_Label"

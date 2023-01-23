@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://Audio/Can You Really Call This A Hotel... [8-Bit; VRC6] - Undertale.mp3" type="AudioStream" id=1]
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer"]
+stream = ExtResource( 1 )
+volume_db = -0.068
+autoplay = true

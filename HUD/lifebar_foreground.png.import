@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/lifebar_foreground.png-8aca793ce436defc6ea2b98b5a62846d.stex"
+path="res://.import/lifebar_foreground.png-bd734a68c3ccc49dfbef59671e87ba3e.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://lifebar_foreground.png"
-dest_files=[ "res://.import/lifebar_foreground.png-8aca793ce436defc6ea2b98b5a62846d.stex" ]
+source_file="res://HUD/lifebar_foreground.png"
+dest_files=[ "res://.import/lifebar_foreground.png-bd734a68c3ccc49dfbef59671e87ba3e.stex" ]
 
 [params]
 

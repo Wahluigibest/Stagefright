@@ -1,0 +1,15 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+path="res://.import/Can You Really Call This A Hotel... [8-Bit; VRC6] - Undertale.mp3-dc6a8c8e4803db98cab9e00e255b668b.mp3str"
+
+[deps]
+
+source_file="res://Audio/Can You Really Call This A Hotel... [8-Bit; VRC6] - Undertale.mp3"
+dest_files=[ "res://.import/Can You Really Call This A Hotel... [8-Bit; VRC6] - Undertale.mp3-dc6a8c8e4803db98cab9e00e255b668b.mp3str" ]
+
+[params]
+
+loop=true
+loop_offset=0

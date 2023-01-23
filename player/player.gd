@@ -47,6 +47,8 @@ signal Direction_Label_change(Value)
 signal Position_Info(X, Y)
 #Sends HP info to other sprites
 signal Health_Info(HP)
+#tells other sprites when the player has died
+signal death_awww()
 
 var jump_hold_time = 0.2
 var local_hold_time = 0
@@ -109,7 +111,7 @@ func get_input(direction,jump,walk,delta, CURRENT_POSITION):
 		#The wall checker detects any walls in front of the player but also needs to not detect any slopes
 		#All of the slopes are 45 degrees so we use 135 degrees to ensure it never touches slopes
 		$Wallchecker.rotation_degrees = 135 * -direction
-		print(NO_MOVE_HORIZONTAL_TIME)
+		#print(NO_MOVE_HORIZONTAL_TIME)
 		#Adds all effects so you can accelerate
 		if NO_MOVE_HORIZONTAL_TIME > 0.0:
 			NO_MOVE_HORIZONTAL_TIME -= delta
@@ -155,7 +157,7 @@ func animation(direction, jump, walk):
 			emit_signal("Animation_label_change", "Current animation: Idle")
 		if jump:
 			$AnimationTree["parameters/jump/active"] = true
-			emit_signal("Animation_label_change", "Current animation: Jump")
+			emit_signal("Animation_label_change","Current animation: Jump")
 	elif VELOCITY.y < 1600:
 		$AnimationTree["parameters/state/current"] = States.FALL
 		emit_signal("Animation_label_change", "Current animation: Fall")
@@ -193,7 +195,14 @@ func bottomless_pit_check(CURRENT_POSITION):
 	emit_signal("Position_Info", CURRENT_POSITION.x, CURRENT_POSITION.y)
 	if CURRENT_POSITION.y > 4000:
 		health -= 20
-		print(health)
+		#print(health)
 		emit_signal("Health_Info", health)
 		self.position = Vector2(90, 550.027771)
-		
+	if health == 0 or health < 0:
+		emit_signal("death_awww")
+		print("emited!")
+
+
+func _on_Death_Screen_Unpause_tree():
+	health = 100
+	emit_signal("Health_Info", health)
