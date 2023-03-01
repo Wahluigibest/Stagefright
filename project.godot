@@ -39,6 +39,10 @@ window/dpi/allow_hidpi=true
 window/stretch/mode="2d"
 window/stretch/aspect="keep_height"
 
+[global]
+
+layer=false
+
 [input]
 
 move_left={
@@ -79,6 +83,23 @@ walk={
 , Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":0,"button_index":5,"pressure":0.0,"pressed":false,"script":null)
  ]
 }
+
+[layer_names]
+
+2d_render/layer_1="Full"
+2d_render/layer_2="One-way"
+2d_render/layer_3="Lava"
+2d_render/layer_4="Temporary"
+2d_render/layer_5="Ice"
+2d_render/layer_6="Spikes"
+2d_render/layer_8="Bouncy"
+2d_physics/layer_1="Full"
+2d_physics/layer_2="One-way"
+2d_physics/layer_3="Lava"
+2d_physics/layer_4="Temporary"
+2d_physics/layer_5="Ice"
+2d_physics/layer_6="Spikes"
+2d_physics/layer_8="Bouncy"
 
 [network]
 

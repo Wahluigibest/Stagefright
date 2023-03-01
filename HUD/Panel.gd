@@ -12,21 +12,33 @@ func _on_Death_Screen_Unpause_tree():
 	visible = true 
 
 func _on_SkeletalPlayer_Label_change(Name, Value):
+	#Normal Player Labels
 	if Name == "AnimationLabel":
-		 $AnimationLabel.text = Value
+		$PlayerValues/AnimationLabel.text = Value
 	if Name == "CeilingLabel":
-		$CeilingLabel.text = Value
+		$PlayerValues/CeilingLabel.text = Value
 	if Name == "DirectionLabel":
-		$DirectionLabel.text = Value
+		$PlayerValues/DirectionLabel.text = Value
 	if Name == "FloorLabel":
-		$FloorLabel.text = Value
+		$PlayerValues/FloorLabel.text = Value
 	if Name == "VelocityLabel":
-		$VelocityLabel.text = Value
+		$PlayerValues/VelocityLabel.text = Value
 	if Name == "WallLabel":
-		$WallLabel.text = Value
+		$PlayerValues/WallLabel.text = Value
 	if Name == "JumpLabel":
-		$JumpLabel.text = ("Allowed Jumps: " + Value)
-
+		$PlayerValues/JumpLabel.text = ("Allowed Jumps: " + Value)
+	
+	#Floor Labels
+	if Name == "FullFloor":
+		$FloorValues/FullFloor.text = ("Full Floor? " + str(Value))
+	if Name == "Bounce":
+		$FloorValues/Bounce.text = ("Bounce? " + str(Value))
+	if Name == "Ice":
+		$FloorValues/Ice.text = ("Ice? " + str(Value))
+	if Name == "Lava":
+		$FloorValues/Lava.text = ("Lava? " + str(Value))
+	if Name == "Temp":
+		$FloorValues/Temp.text = ("Temp? " + str(Value))
 
 func _on_SkeletalPlayer_Position_Info(X, Y):
-	$PositionLabel.text = ("X: " + str(round(X)) + " Y: " + str(round(Y)))
+	$PlayerValues/PositionLabel.text = ("X: " + str(round(X)) + " Y: " + str(round(Y)))

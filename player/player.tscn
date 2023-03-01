@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=2]
+[gd_scene load_steps=29 format=2]
 
 [ext_resource path="res://player/player.gd" type="Script" id=1]
 [ext_resource path="res://player/gBot.png" type="Texture" id=2]
@@ -1955,12 +1955,18 @@ nodes/walk_animation/node = SubResource( 21 )
 nodes/walk_animation/position = Vector2( 0, 140 )
 nodes/walk_timescale/node = SubResource( 22 )
 nodes/walk_timescale/position = Vector2( 200, 120 )
-node_connections = [ "jump", 0, "state", "jump", 1, "jump_animation", "land", 0, "jump", "land", 1, "land_animation", "run_timescale", 0, "run_animation", "walk_timescale", 0, "walk_animation", "land_hard", 0, "land", "land_hard", 1, "land_hard_animation", "state", 0, "idle_animation", "state", 1, "walk_timescale", "state", 2, "run_timescale", "state", 3, "fly_animation", "state", 4, "fall_animation", "output", 0, "land_hard" ]
+node_connections = [ "state", 0, "idle_animation", "state", 1, "walk_timescale", "state", 2, "run_timescale", "state", 3, "fly_animation", "state", 4, "fall_animation", "output", 0, "land_hard", "jump", 0, "state", "jump", 1, "jump_animation", "land", 0, "jump", "land", 1, "land_animation", "land_hard", 0, "land", "land_hard", 1, "land_hard_animation", "walk_timescale", 0, "walk_animation", "run_timescale", 0, "run_animation" ]
 
 [sub_resource type="RectangleShape2D" id=24]
 extents = Vector2( 11, 16.4358 )
 
+[sub_resource type="CapsuleShape2D" id=29]
+radius = 13.0
+height = 7.62939e-06
+
 [node name="SkeletalPlayer" type="KinematicBody2D"]
+collision_layer = 3
+collision_mask = 3
 script = ExtResource( 1 )
 __meta__ = {
 "_edit_horizontal_guides_": [ 379.019 ]
@@ -1991,6 +1997,10 @@ parameters/walk_timescale/scale = 0.1
 position = Vector2( 0.776211, -16.4722 )
 shape = SubResource( 24 )
 one_way_collision_margin = 0.0
+
+[node name="Timer" type="Timer" parent="."]
+wait_time = 0.35
+autostart = true
 
 [node name="Position2D" type="Position2D" parent="."]
 
@@ -2162,3 +2172,73 @@ position = Vector2( 0, -15 )
 rotation = -2.33874
 enabled = true
 cast_to = Vector2( 0, 30 )
+
+[node name="Fullchecker" type="Area2D" parent="."]
+position = Vector2( 1, 0 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Fullchecker"]
+rotation = 1.5708
+shape = SubResource( 29 )
+
+[node name="Icechecker" type="Area2D" parent="."]
+position = Vector2( 1, 0 )
+collision_layer = 16
+collision_mask = 16
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Icechecker"]
+rotation = 1.5708
+shape = SubResource( 29 )
+
+[node name="Bouncechecker" type="Area2D" parent="."]
+position = Vector2( 1, 0 )
+collision_layer = 128
+collision_mask = 128
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Bouncechecker"]
+rotation = 1.5708
+shape = SubResource( 29 )
+
+[node name="Lavachecker" type="Area2D" parent="."]
+position = Vector2( 1, 0 )
+collision_layer = 4
+collision_mask = 4
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Lavachecker"]
+rotation = 1.5708
+shape = SubResource( 29 )
+
+[node name="TempChecker" type="Area2D" parent="."]
+position = Vector2( 1, 0 )
+collision_layer = 8
+collision_mask = 8
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TempChecker"]
+rotation = 1.5708
+shape = SubResource( 29 )
+
+[connection signal="timeout" from="Timer" to="." method="_on_Timer_timeout"]
+[connection signal="body_entered" from="Fullchecker" to="." method="_on_Fullchecker_body_entered"]
+[connection signal="body_exited" from="Fullchecker" to="." method="_on_Fullchecker_body_exited"]
+[connection signal="body_entered" from="Icechecker" to="." method="_on_Icechecker_body_entered"]
+[connection signal="body_exited" from="Icechecker" to="." method="_on_Icechecker_body_exited"]
+[connection signal="body_entered" from="Bouncechecker" to="." method="_on_Bouncechecker_body_entered"]
+[connection signal="body_exited" from="Bouncechecker" to="." method="_on_Bouncechecker_body_exited"]
+[connection signal="body_entered" from="Lavachecker" to="." method="_on_Lavachecker_body_entered"]
+[connection signal="body_exited" from="Lavachecker" to="." method="_on_Lavachecker_body_exited"]
+[connection signal="body_entered" from="TempChecker" to="." method="_on_TempChecker_body_entered"]
+[connection signal="body_exited" from="TempChecker" to="." method="_on_TempChecker_body_exited"]

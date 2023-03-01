@@ -17,6 +17,7 @@ const FLOOR_NORMAL = Vector2.UP
 const SNAP_DIRECTION = Vector2.DOWN
 const SNAP_LENGTH = 32.0
 const SLOPE_THERSHOLD = deg2rad(46)
+var _timer = null
 
 #No move horizontal ensures the player can not use the left or right inputs to move in some cases like after wallkicking or hitstun
 var NO_MOVE_HORIZONTAL_TIME = 0.0
@@ -31,13 +32,21 @@ var jump_count = 0
 var walk_speed = 157.5
 var wallkick_speed = Vector2(285, -560)
 var gravity = 2000
-var friction = 30 
+var friction = 30
 var wallslide_speed = 200
 var wallkick_stop_frames = 0.3
 var health = 100
 
+#DIFFERENT TYPES OF TILES
+var on_full := false
+var on_lava  := false
+var on_ice := false
+var on_bounce := false
+var on_temp := false
+
 #Variables so you can communicate between child nodes, The position node is just so you can flip and rotate the player easily
 onready var position2D = $Position2D 
+
 #These signals are to send this info to the Dev HUD
 signal Label_change(Name, Value)
 #Tracks current player position
@@ -45,13 +54,20 @@ signal Position_Info(X, Y)
 #Sends HP info to other sprites
 signal Health_Info(HP)
 #tells other sprites when the player has died
-signal death_awww()
+signal death_awww() 
 
 var local_hold_time = 0
 var falling_ani = false
 
 func _ready():
 	$AnimationTree.active = true
+	_timer = Timer.new()
+	add_child(_timer)
+	
+	_timer.connect("timeout", self, "_on_Timer_timeout")
+	_timer.set_wait_time(1.0)
+	_timer.set_one_shot(false) # Make sure it loops
+	_timer.start()
 
 func _physics_process(delta):
 #Setting up variables, they must stay in a function
@@ -62,7 +78,6 @@ func _physics_process(delta):
 	var jump = Input.is_action_just_pressed("jump")
 	var walk = Input.get_action_strength("walk")
 	var CURRENT_POSITION = get_position()
-	
 	
 	get_input(direction,jump,walk,delta, CURRENT_POSITION)
 	move_and_fall(delta)
@@ -81,14 +96,14 @@ func move_and_fall(delta):
 		VELOCITY.y = clamp(VELOCITY.y, jump_speed, wallslide_speed)
 
 func get_input(direction,jump,walk,delta, CURRENT_POSITION):
+	#print(on_lava)
+	Floor_Prop(jump)
 	if jump:
 		if jump_count < allowed_jumps:
 			#Setting the snap vector to zero here allows the players to jump instead of being glued to the floor
 			SNAP_VECTOR = Vector2.ZERO
 			VELOCITY.y = jump_speed
 			jump_count += 1
-		#This is for wallkicks, the player senses ceilings as walls due the fact the sensor is at 135 degrees
-		#So there is a checker to make sure you can't wallkick off of ceils
 		if is_near_wall() and !is_near_ceiling():
 			if Input.is_action_pressed("jump") and (Input.is_action_pressed("move_left") and direction < 0) or (Input.is_action_pressed("move_right") and direction > 0):
 				#It felt clunky at the beginning because you would quickly turn around from your left input, 
@@ -97,6 +112,8 @@ func get_input(direction,jump,walk,delta, CURRENT_POSITION):
 				VELOCITY.x = wallkick_speed.x * -direction
 				VELOCITY.y = -1000
 				jump_count -= 1
+		#This is for wallkicks, the player senses ceilings as walls due the fact the sensor is at 135 degrees
+		#So there is a checker to make sure you can't wallkick off of ceils
 	
 	if direction != 0:
 		#Turn around and move
@@ -116,9 +133,16 @@ func get_input(direction,jump,walk,delta, CURRENT_POSITION):
 	else:
 		#Stop moving and apply friction
 		VELOCITY.x = move_toward(VELOCITY.x, 0, friction)
+	
+	for i in get_slide_count():
+		var collision = get_slide_collision(i)
+		if collision.collider.has_method("collide_with"):
+			collision.collider.collide_with(collision, self)
+		
 	animation(direction, jump, walk)
 	Label_print(direction)
 	bottomless_pit_check(CURRENT_POSITION)
+	Death_check()
 
 func reset_snap():
 	SNAP_VECTOR = SNAP_DIRECTION * SNAP_LENGTH
@@ -188,14 +212,66 @@ func bottomless_pit_check(CURRENT_POSITION):
 	emit_signal("Position_Info", CURRENT_POSITION.x, CURRENT_POSITION.y)
 	if CURRENT_POSITION.y > 4000:
 		health -= 20
-		#print(health)
-		emit_signal("Health_Info", health)
 		self.position = Vector2(90, 550.027771)
-	if health == 0 or health < 0:
-		emit_signal("death_awww")
-		print("emited!")
-
 
 func _on_Death_Screen_Unpause_tree():
 	health = 100
 	emit_signal("Health_Info", health)
+
+func Floor_Prop(jump):
+	emit_signal("Label_change", "Ice", on_ice)
+	emit_signal("Label_change", "Bounce", on_bounce)
+	emit_signal("Label_change", "FullFloor", on_full)
+	emit_signal("Label_change", "Lava", on_lava)
+	emit_signal("Label_change", "Temp", on_temp)
+	if on_ice:
+		friction = 10
+		run_max = 370
+	else: 
+		friction = 30
+		run_max = 300
+	if on_bounce and !jump:
+		VELOCITY.y = -720
+		jump_count = 0
+
+func Death_check():
+		emit_signal("Health_Info", health)
+		if health == 0 or health < 0:
+			self.position = Vector2(90, 550.027771)
+			emit_signal("death_awww")
+
+func _on_Fullchecker_body_entered(_body):
+	on_full = true
+
+func _on_Fullchecker_body_exited(_body):
+	on_full = false
+
+func _on_Icechecker_body_entered(_body):
+	on_ice = true
+
+func _on_Icechecker_body_exited(_body):
+	on_ice = false
+
+func _on_Bouncechecker_body_entered(_body):
+	on_bounce = true
+
+func _on_Bouncechecker_body_exited(_body):
+	on_bounce = false
+
+func _on_Lavachecker_body_entered(_body):
+	on_lava = true
+
+func _on_Lavachecker_body_exited(_body):
+	on_lava = false
+
+func _on_TempChecker_body_entered(_body):
+	on_temp = true
+
+func _on_TempChecker_body_exited(_body):
+	on_temp = false
+
+func _on_Timer_timeout():
+	#this is so the player takes damage every second on lava
+	if on_lava:
+		health -= 5
+		
